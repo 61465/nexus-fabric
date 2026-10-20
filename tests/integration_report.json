@@ -1,0 +1,50 @@
+{
+  "started_at": "2026-10-20T19:00:25",
+  "engine": {
+    "started": true,
+    "pid": 41584,
+    "exit_code": 1
+  },
+  "auth": {
+    "accepted": true,
+    "rejected_bad_token": true,
+    "reject_code": 4403
+  },
+  "window": {
+    "frame_counts": {
+      "hardware": 27,
+      "agents": 6,
+      "system_state": 1,
+      "cycle": 1,
+      "log": 9
+    },
+    "samples_mean": {
+      "fps": 89.75,
+      "cpu": 0.0,
+      "gpu": 0.0,
+      "ram": 0.0
+    },
+    "sample_counts": {
+      "fps": 27,
+      "cpu": 27,
+      "gpu": 27,
+      "ram": 27
+    }
+  },
+  "commands": {
+    "mesh_health": "sent",
+    "etw_status": "sent",
+    "agent_errors": "sent",
+    "mesh_submit": "sent",
+    "predict_next": "sent"
+  },
+  "ended_at": "2026-10-20T19:01:27",
+  "checks": {
+    "engine_started": true,
+    "auth_accepted": true,
+    "bad_token_rejected": true,
+    "received_hardware_frames": true,
+    "received_agents_frames": true
+  },
+  "passed": true
+}

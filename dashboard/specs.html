@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Nexus Fabric — Specs & Comparison</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<style>
+  :root { --bg:#0d1117; --card:#161b22; --border:#30363d; --text:#c9d1d9; --muted:#8b949e;
+          --accent:#58a6ff; --good:#3fb950; --bad:#f85149; --warn:#d29922; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:var(--text); font-family:'Inter', system-ui, sans-serif;
+         padding:1.25rem; min-height:100vh; }
+  h1 { font-size:1.35rem; font-weight:700; margin-bottom:.25rem; }
+  .sub { color:var(--muted); font-size:.85rem; margin-bottom:1.5rem; }
+  .row { display:grid; grid-template-columns:repeat(3, 1fr); gap:1rem; margin-bottom:1rem; }
+  .card { background:var(--card); border:1px solid var(--border); border-radius:.6rem; padding:1rem 1.1rem; }
+  .card h2 { font-size:.9rem; font-weight:600; letter-spacing:.08em; color:var(--muted);
+             margin-bottom:.75rem; text-transform:uppercase; }
+  .metric { display:flex; justify-content:space-between; align-items:baseline;
+            padding:.35rem 0; border-bottom:1px dashed var(--border); font-size:.9rem; }
+  .metric:last-child { border-bottom:none; }
+  .metric .label { color:var(--muted); }
+  .metric .val { font-family:'JetBrains Mono', monospace; font-weight:600; color:var(--text); }
+  .delta .val { font-weight:700; }
+  .delta .pos { color:var(--good); }
+  .delta .neg { color:var(--bad); }
+  .delta .neu { color:var(--muted); }
+  .status { display:inline-block; padding:.15rem .5rem; border-radius:.3rem; font-size:.7rem;
+            background:var(--border); color:var(--muted); margin-left:.5rem; }
+  .status.live { background:var(--good); color:#000; }
+  .status.offline { background:var(--bad); color:#fff; }
+  .controls { display:flex; gap:.75rem; justify-content:center; margin-top:1rem; }
+  button { background:var(--accent); color:#000; border:none; padding:.65rem 1.4rem;
+           border-radius:.4rem; font-family:inherit; font-weight:600; cursor:pointer;
+           font-size:.9rem; transition:transform .1s; }
+  button:hover { transform:translateY(-1px); }
+  button:disabled { background:var(--border); color:var(--muted); cursor:not-allowed; }
+  .hw { background:var(--card); border:1px solid var(--border); border-radius:.6rem;
+        padding:1rem; margin-bottom:1rem; font-size:.85rem; }
+  .hw-grid { display:grid; grid-template-columns:repeat(4, 1fr); gap:.75rem; margin-top:.5rem; }
+  .hw-item .k { color:var(--muted); font-size:.75rem; }
+  .hw-item .v { font-family:'JetBrains Mono', monospace; font-weight:600; }
+</style>
+</head>
+<body>
+<h1>Nexus Fabric — Specs &amp; Before/After</h1>
+<div class="sub">Live hardware state <span id="connStatus" class="status offline">offline</span></div>
+
+<div class="hw">
+  <div style="font-size:.8rem; color:var(--muted); text-transform:uppercase; letter-spacing:.08em;">Current hardware</div>
+  <div class="hw-grid">
+    <div class="hw-item"><div class="k">CPU</div><div class="v" id="hwCpu">—</div></div>
+    <div class="hw-item"><div class="k">iGPU</div><div class="v" id="hwIgpu">—</div></div>
+    <div class="hw-item"><div class="k">dGPU</div><div class="v" id="hwDgpu">—</div></div>
+    <div class="hw-item"><div class="k">RAM</div><div class="v" id="hwRam">—</div></div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="card"><h2>Before</h2>
+    <div class="metric"><span class="label">CPU %</span><span class="val" id="cpu-before">—</span></div>
+    <div class="metric"><span class="label">GPU %</span><span class="val" id="gpu-before">—</span></div>
+    <div class="metric"><span class="label">FPS</span><span class="val" id="fps-before">—</span></div>
+    <div class="metric"><span class="label">Frame p50 (ms)</span><span class="val" id="ft50-before">—</span></div>
+    <div class="metric"><span class="label">Frame p99 (ms)</span><span class="val" id="ft99-before">—</span></div>
+    <div class="metric"><span class="label">Power (W)</span><span class="val" id="pw-before">—</span></div>
+    <div class="metric"><span class="label">Temp (°C)</span><span class="val" id="temp-before">—</span></div>
+  </div>
+  <div class="card"><h2>After</h2>
+    <div class="metric"><span class="label">CPU %</span><span class="val" id="cpu-after">—</span></div>
+    <div class="metric"><span class="label">GPU %</span><span class="val" id="gpu-after">—</span></div>
+    <div class="metric"><span class="label">FPS</span><span class="val" id="fps-after">—</span></div>
+    <div class="metric"><span class="label">Frame p50 (ms)</span><span class="val" id="ft50-after">—</span></div>
+    <div class="metric"><span class="label">Frame p99 (ms)</span><span class="val" id="ft99-after">—</span></div>
+    <div class="metric"><span class="label">Power (W)</span><span class="val" id="pw-after">—</span></div>
+    <div class="metric"><span class="label">Temp (°C)</span><span class="val" id="temp-after">—</span></div>
+  </div>
+  <div class="card delta"><h2>Delta</h2>
+    <div class="metric"><span class="label">CPU %</span><span class="val neu" id="cpu-delta">—</span></div>
+    <div class="metric"><span class="label">GPU %</span><span class="val neu" id="gpu-delta">—</span></div>
+    <div class="metric"><span class="label">FPS</span><span class="val neu" id="fps-delta">—</span></div>
+    <div class="metric"><span class="label">Frame p50</span><span class="val neu" id="ft50-delta">—</span></div>
+    <div class="metric"><span class="label">Frame p99</span><span class="val neu" id="ft99-delta">—</span></div>
+    <div class="metric"><span class="label">Power</span><span class="val neu" id="pw-delta">—</span></div>
+    <div class="metric"><span class="label">Temp</span><span class="val neu" id="temp-delta">—</span></div>
+  </div>
+</div>
+
+<div class="controls">
+  <button id="btnBefore" type="button">Capture BEFORE</button>
+  <button id="btnAfter"  type="button" disabled>Capture AFTER</button>
+  <button id="btnReset"  type="button">Reset</button>
+</div>
+
+<script>
+(() => {
+  const KEYS = ["cpu", "gpu", "fps", "ft50", "ft99", "pw", "temp"];
+  // frame-time keys invert: lower is better. Same for pw/temp.
+  const INVERT = new Set(["ft50", "ft99", "pw", "temp"]);
+  const current = {};
+  let before = null, after = null;
+  let ws = null, wsOpen = false;
+
+  const $ = (id) => document.getElementById(id);
+  const setText = (id, v) => { const el = $(id); if (el) el.textContent = v; };
+  const setStatus = (s) => { const el = $("connStatus"); el.textContent = s; el.className = "status " + s; };
+
+  function fmt(n) {
+    if (n === undefined || n === null || Number.isNaN(n)) return "—";
+    if (typeof n !== "number") return String(n);
+    return n >= 100 ? n.toFixed(0) : n.toFixed(1);
+  }
+
+  function snapshot() {
+    const s = {};
+    KEYS.forEach(k => s[k] = current[k]);
+    return s;
+  }
+
+  function writeFields(suffix, snap) {
+    KEYS.forEach(k => setText(`${k}-${suffix}`, fmt(snap[k])));
+  }
+
+  function computeDelta() {
+    if (!before || !after) return;
+    KEYS.forEach(k => {
+      const b = before[k], a = after[k];
+      const el = $(`${k}-delta`);
+      if (!el || b === undefined || a === undefined || b === 0) {
+        if (el) { el.textContent = "—"; el.className = "val neu"; }
+        return;
+      }
+      const diff = ((a - b) / Math.abs(b)) * 100;
+      const better = INVERT.has(k) ? diff < 0 : diff > 0;
+      const cls = Math.abs(diff) < 0.5 ? "neu" : (better ? "pos" : "neg");
+      el.className = "val " + cls;
+      el.textContent = (diff >= 0 ? "+" : "") + diff.toFixed(1) + "%";
+    });
+  }
+
+  function applyHardware(data) {
+    if (data.cpu && data.cpu.load_pct !== undefined) current.cpu = data.cpu.load_pct;
+    if (data.dgpu && data.dgpu.load_pct !== undefined) current.gpu = data.dgpu.load_pct;
+    if (data.igpu_load !== undefined && current.gpu === undefined) current.gpu = data.igpu_load;
+    if (data.fps !== undefined) current.fps = data.fps;
+    if (data.frametime_ms !== undefined) current.ft50 = data.frametime_ms;
+    if (data.frametime_p99_ms !== undefined) current.ft99 = data.frametime_p99_ms;
+    if (data.dgpu && data.dgpu.power_w !== undefined) current.pw = data.dgpu.power_w;
+    if (data.dgpu && data.dgpu.temp_c !== undefined) current.temp = data.dgpu.temp_c;
+
+    setText("hwCpu", (data.cpu && data.cpu.name) || "—");
+    setText("hwDgpu", (data.dgpu && data.dgpu.name) || "—");
+    setText("hwIgpu", (data.igpu_name) || "integrated");
+    setText("hwRam", data.ram && data.ram.total_gb ? `${data.ram.total_gb} GB` : "—");
+  }
+
+  function connect() {
+    try {
+      ws = new WebSocket("ws://localhost:9001");
+    } catch (e) {
+      setStatus("offline");
+      return;
+    }
+    ws.onopen = () => {
+      wsOpen = true;
+      setStatus("live");
+      const token = (window.NEXUS_TOKEN || localStorage.getItem("nexus_token") || "");
+      ws.send(JSON.stringify({ auth: token }));
+    };
+    ws.onmessage = (ev) => {
+      try {
+        const msg = JSON.parse(ev.data);
+        if (msg.type === "hardware" && msg.data) applyHardware(msg.data);
+      } catch (e) { /* ignore */ }
+    };
+    ws.onclose = ws.onerror = () => {
+      wsOpen = false;
+      setStatus("offline");
+      setTimeout(connect, 3000);
+    };
+    setTimeout(() => { if (!wsOpen) setStatus("offline"); }, 2000);
+  }
+
+  $("btnBefore").addEventListener("click", () => {
+    before = snapshot();
+    writeFields("before", before);
+    $("btnAfter").disabled = false;
+    computeDelta();
+  });
+  $("btnAfter").addEventListener("click", () => {
+    after = snapshot();
+    writeFields("after", after);
+    computeDelta();
+  });
+  $("btnReset").addEventListener("click", () => {
+    before = null; after = null;
+    KEYS.forEach(k => {
+      setText(`${k}-before`, "—"); setText(`${k}-after`, "—");
+      const el = $(`${k}-delta`); if (el) { el.textContent = "—"; el.className = "val neu"; }
+    });
+    $("btnAfter").disabled = true;
+  });
+
+  connect();
+})();
+</script>
+</body>
+</html>
